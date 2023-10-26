@@ -1,0 +1,37 @@
+{
+    "title": "Actor Log Watcher's Input",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "actorId": {
+            "title": "Actor ID",
+            "type": "string",
+            "description": "Specify Actor's ID",
+            "editor": "textfield"
+        },
+        "limit": {
+            "title": "Limit",
+            "type": "integer",
+            "description": "Limit the number of resuts"
+        },
+        "partOfDate": {
+            "title": "Part Of Date",
+            "type": "string",
+            "description": "Examples: '2023', '2023-10', '2023-10-12', '2023-10-12 10'",
+            "editor": "textfield"
+        },
+        "token": {
+            "title": "Redash API token",
+            "type": "string",
+            "description": "",
+            "editor": "textfield",
+            "isSecret": true
+        }
+    },
+    "required": [
+        "actorId",
+        "partOfDate",
+        "limit",
+        "token"
+    ]
+}
