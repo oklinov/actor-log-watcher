@@ -8,5 +8,39 @@
 		"templateId": "ts-start"
 	},
 	"input": "./input_schema.json",
+    "storages": {
+        "dataset": {
+            "actorSpecification": 1,
+            "title": "Google Places Dataset",
+            "description": "",
+            "views": {
+                "overview": {
+                    "title": "Overview",
+                    "description": "It can take about one minute until the first results are available.",
+                    "transformation": {
+                        "fields": [
+                            "runLink",
+                            "userLink",
+                            "warnMessages",
+                            "errorMessages",
+                            "buildVersion",
+                            "status",
+                            "input",
+                            "durationSecs",
+                            "startedAt"
+                        ]
+                    },
+                    "display": {
+                        "component": "table",
+                        "properties": {
+                            "title": {
+                                "label": "Place name"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
 	"dockerfile": "./Dockerfile"
 }
