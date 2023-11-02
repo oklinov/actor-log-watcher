@@ -1,45 +1,11 @@
 import { Actor, ApifyClient, log } from 'apify'
 import process from 'node:process'
 
-import { RedashClient, ChartsQueryParameters, ChartsResultItem } from './redashClient.js'
-
 await Actor.init()
 
 type Input = {
-    actorId: string
-    limit: number
-    partOfDate: string
-    token: string
+    datasetId: string
 }
-
-const input = await Actor.getInput<Input>()
-if (!input) throw new Error("Input is missing!");
-const { actorId, limit, token, partOfDate } = input
-
-const apifyToken = process.env.APIFY_TOKEN
-const client = new ApifyClient({ token: apifyToken })
-
-const queryParams: ChartsQueryParameters = {
-    actor_id: actorId,
-    limit: limit.toString(),
-    part_of_date: partOfDate,
-}
-log.info(`Query params ${JSON.stringify(queryParams, null, '  ')}`)
-
-const cc = new RedashClient(token, queryParams)
-const job = await cc.startQuery()
-log.info(`Started charts job: ${job.id}`)
-
-log.info(`Wating for result...`)
-const resultId = await cc.waitForResults(job)
-// const resultId = 2812356
-if (!resultId) {
-    throw await Actor.fail('result_id is null')
-}
-log.info(`Job finished, result id: ${resultId}`)
-
-const results = await cc.getResults(resultId)
-log.info(`Got ${results.length} results`)
 
 type RunStats = {
     runId: string
@@ -61,10 +27,40 @@ type RunStats = {
     input: any
 }
 
+type DatasetItem = {
+    user_id: string
+    run_id: string
+    started_at: string
+    finished_at: string
+    dataset_clean_item_count: number
+    status: string
+    duration_seconds: number
+    build_id: string
+    options_build: string
+    run_link: string
+    user_link: string
+}
+
+const input = await Actor.getInput<Input>()
+if (!input) throw new Error("Input is missing!")
+const { datasetId } = input
+
+const apifyToken = process.env.APIFY_TOKEN
+const client = new ApifyClient({ token: apifyToken })
+
+const datasetClient = client.dataset(datasetId)
+const dataset = await datasetClient.get()
+if (!dataset) {
+    throw Actor.fail(`Could not get dataset ${datasetId}`)
+}
+
+const datasetItems = (await datasetClient.listItems()).items as DatasetItem[]
+
 const stats: RunStats[] = []
 
-for (const result of results) {
-    const runStats = await getLogsStats(result)
+for (const [index, item] of datasetItems.entries()) {
+    log.info(`(${index}/${datasetItems.length}) Processing run ${item.run_id}`)
+    const runStats = await getLogsStats(item)
     stats.push(runStats)
 }
 
@@ -73,7 +69,7 @@ for (const runStats of sorted) {
     await Actor.pushData({ ...runStats })
 }
 
-async function getLogsStats(res: ChartsResultItem): Promise<RunStats> {
+async function getLogsStats(item: DatasetItem): Promise<RunStats> {
     const {
         dataset_clean_item_count: datasetItems,
         duration_seconds: durationSecs,
@@ -86,10 +82,9 @@ async function getLogsStats(res: ChartsResultItem): Promise<RunStats> {
         finished_at: finishedAt,
         build_id: buildId,
         options_build: buildVersion,
-    } = res
-    log.info(`Processing run ${runId}`)
+    } = item
     const run = client.run(runId)
-    const runLog = await run.log().get() ?? '';
+    const runLog = await run.log().get() ?? ''
     const input = (await run.keyValueStore().getRecord('INPUT'))?.value
     const lines = runLog.split('\n')
     const stats: RunStats = {

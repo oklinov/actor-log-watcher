@@ -1,7 +1,7 @@
 {
 	"actorSpecification": 1,
-	"name": "actor-log-watcher",
-	"title": "Actor Log Watcher",
+	"name": "actor-logs-analyzer",
+	"title": "Logs Analyzer",
 	"description": "",
 	"version": "0.0",
 	"meta": {
